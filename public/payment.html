@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .confirmation-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 400px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .confirmation-container h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            transition: color 0.3s;
+        }
+
+        .confirmation-container p {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .confirmation-container a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 25px;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Success styles */
+        .successfull-payment-container h1 {
+            color: #003669;
+        }
+
+        .successfull-payment-container a {
+            background-color: #003669;
+        }
+
+        .successfull-payment-container a:hover {
+            background-color: #054a8a;
+            transform: scale(1.05);
+        }
+
+        /* Failure styles */
+        .failed-payment-container h1 {
+            color: #e74c3c;
+        }
+
+        .failed-payment-container a {
+            background-color: #e74c3c;
+        }
+
+        .failed-payment-container a:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
+        }
+
+        /* Success or failure icon */
+        .icon {
+            font-size: 50px;
+            margin-bottom: 20px;
+        }
+
+        .successfull-icon {
+            color: #003669;
+        }
+
+        .failed-icon {
+            color: #e74c3c;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .confirmation-container {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- successfull-payment-container , failed-payment-container -->
+    <div class="{{dynamicClass}}-payment-container confirmation-container">
+        <div class="icon {{dynamicClass}}-icon">
+            {{icon}}
+        </div>
+        <h1>Payment {{status}}</h1>
+        <p>{{description}}</p>
+        <!-- TODO : add frontend return url -->
+        <a href="...">Return to Main Page</a>
+
+    </div>
+
+</body>
+
+</html>

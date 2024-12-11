@@ -1,0 +1,259 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// MODEL
+model User {
+  id            String            @id @default(uuid())
+  email         String            @unique
+  password      String?
+  role          UserRole          @default(CUSTOMER)
+  loginProvider UserLoginProvider @default(PASSWORD)
+  status        UserStatus        @default(ACTIVE)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  resetPasswordCode        String?
+  resetPasswordExpiredDate DateTime?
+
+  // References
+  Profile Profile?
+  Vendor  Vendor?
+  Review  Review[]
+  Order   Order[]
+  Follow  Follow[]
+
+  @@map("users")
+}
+
+model Profile {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  address   String?
+  img       String?
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  User User @relation(fields: [email], references: [email])
+
+  @@map("profiles")
+}
+
+model Vendor {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String
+  phone         String?
+  logo          String?
+  description   String?
+  addresss      String?
+  isBlackListed Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  User           User             @relation(fields: [email], references: [email])
+  Product        Product[]
+  VendorResponse VendorResponse[]
+  Order          Order[]
+  Follow         Follow[]
+
+  @@map("vendors")
+}
+
+model Follow {
+  userId   String
+  vendorId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  User   User   @relation(fields: [userId], references: [id])
+  Vendor Vendor @relation(fields: [vendorId], references: [id])
+
+  @@id([userId, vendorId])
+  @@map("follows")
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  icon      String
+  isDeleted Boolean   @default(false)
+  Product   Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  vendorId    String
+  categoryId  String
+  title       String
+  img         String[]
+  description String
+  price       Float
+  quantity    Int
+  isDeleted   Boolean  @default(false)
+
+  //  discount
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // References
+  Vendor        Vendor          @relation(fields: [vendorId], references: [id])
+  Category      Category        @relation(fields: [categoryId], references: [id])
+  Review        Review[]
+  Order         OrderItem[]
+  ProductCoupon ProductCoupon[]
+
+  @@map("products")
+}
+
+// Many to many relationship between product & coupons
+model ProductCoupon {
+  productId String
+  couponId  String
+  Product   Product @relation(fields: [productId], references: [id])
+  Coupon    Coupon  @relation(fields: [couponId], references: [id])
+
+  @@unique([productId, couponId])
+  @@map("productCoupons")
+}
+
+model Coupon {
+  id         String   @id @default(uuid())
+  code       String
+  percentage Float
+  expiryDate DateTime
+  vendorId   String
+
+  ProductCoupon ProductCoupon[]
+
+  @@map("coupons")
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  productImg String?
+  message    String
+  ratings    Int
+  productId  String
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  isDeleted  Boolean  @default(false)
+
+  // Relations
+  Product        Product         @relation(fields: [productId], references: [id])
+  User           User            @relation(fields: [userId], references: [id])
+  VendorResponse VendorResponse?
+
+  @@map("reviews")
+}
+
+model VendorResponse {
+  id        String  @id @default(uuid())
+  message   String
+  reviewId  String  @unique
+  vendorId  String
+  isDeleted Boolean @default(false)
+
+  Review Review @relation(fields: [reviewId], references: [id])
+  Vendor Vendor @relation(fields: [vendorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+
+  @@map("vendorResponses")
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  transactionId String
+  amount        Float
+  orderId       String   @unique
+  gatewayData   Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  Order Order @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  userId        String
+  vendorId      String
+  status        OrderStatus   @default(PENDING)
+  totalPrice    Float
+  paymentStatus PaymentStatus @default(UNPAID)
+
+  User    User     @relation(fields: [userId], references: [id])
+  Vendor  Vendor   @relation(fields: [vendorId], references: [id])
+  Payment Payment?
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  OrderItem OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  productId String
+  orderId   String
+  quantity  Int
+
+  Product Product @relation(fields: [productId], references: [id])
+  Order   Order   @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("orderItems")
+}
+
+// ENUM
+enum UserLoginProvider {
+  PASSWORD
+  GOOGLE
+  GITHUB
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+  VENDOR
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  DELIVERED
+  CANCELLED
+}
