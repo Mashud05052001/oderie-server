@@ -37,7 +37,14 @@ const update = z.object({
     ),
 });
 
+const deleteCouponProduct = z.object({
+  body: z.object({
+    couponId: z.string(),
+    productId: z.string(),
+  }),
+});
 export const CouponValidation = {
   create,
   update,
+  deleteCouponProduct,
 };

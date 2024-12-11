@@ -29,6 +29,12 @@ router.patch(
   CouponController.updateCoupon
 );
 
+router.delete(
+  "/product",
+  validateRequest(CouponValidation.deleteCouponProduct),
+  auth("ADMIN", "VENDOR"),
+  CouponController.deleteCouponProduct
+);
 router.delete("/:id", auth("ADMIN", "VENDOR"), CouponController.deleteCoupon);
 
 export const CouponRoutes = router;

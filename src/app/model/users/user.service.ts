@@ -146,10 +146,13 @@ const getMe = async (
     | undefined,
   userInfo: TExtendedUserData
 ) => {
-  return await prisma.user.findUnique({
-    where: { id: userInfo.userId },
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userInfo.userId, status: "ACTIVE" },
     include: includeObject,
   });
+
+  user["password"] = null;
+  return user;
 };
 
 export const UserService = {

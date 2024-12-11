@@ -16,17 +16,38 @@ const createCoupon = async (
       "You cannot create a coupon where expiry date is already expired."
     );
   }
+  const couponCode = payload?.code || generateRandomCode(6);
+  const isSameCouponValidCodeExist = await prisma.coupon.findFirst({
+    where: {
+      code: couponCode,
+      expiryDate: {
+        gt: new Date(),
+      },
+    },
+  });
+  console.log(isSameCouponValidCodeExist);
+  if (isSameCouponValidCodeExist) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "You have already created a coupon with same code. Please try with a different code"
+    );
+  }
+
   const productIds = payload.productIds;
 
   const couponData = {
-    code: payload?.code || generateRandomCode(6),
+    code: couponCode,
     expiryDate: payload.expiryDate,
     percentage: payload.percentage,
     vendorId: userInfo.vendorId as string,
   };
 
   const allProductsOfTheVendor = await prisma.product.findMany({
-    where: { vendorId: userInfo.vendorId as string, isDeleted: false },
+    where: {
+      vendorId: userInfo.vendorId as string,
+      isDeleted: false,
+      id: { in: payload.productIds },
+    },
     select: { id: true, img: true, title: true },
   });
 
@@ -34,16 +55,6 @@ const createCoupon = async (
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Something went wrong. Please try again after sometime"
-    );
-  }
-  const nonVendorProduct = allProductsOfTheVendor.filter(
-    (item) => !productIds.includes(item.id)
-  );
-
-  if (nonVendorProduct.length > 0) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "You cannot create coupon on another vendor products"
     );
   }
 
@@ -108,6 +119,44 @@ const deleteCoupon = async (userInfo: TExtendedUserData, couponId: string) => {
   return result;
 };
 
+const deleteCouponProduct = async (
+  userInfo: TExtendedUserData,
+  payload: { productId: string; couponId: string }
+) => {
+  let isExist;
+  if (userInfo.role === "ADMIN") {
+    isExist = await prisma.coupon.findUnique({
+      where: {
+        id: payload.couponId,
+        ProductCoupon: { some: { productId: payload.productId } },
+      },
+      include: { _count: true },
+    });
+  } else {
+    isExist = await prisma.coupon.findUnique({
+      where: {
+        id: payload.couponId,
+        vendorId: userInfo?.vendorId as string,
+        ProductCoupon: { some: { productId: payload.productId } },
+      },
+      include: { _count: true },
+    });
+  }
+  if (!isExist) {
+    throw new AppError(httpStatus.NOT_FOUND, "This product is not found");
+  }
+  const result = await prisma.productCoupon.delete({
+    where: {
+      productId_couponId: {
+        couponId: payload.couponId,
+        productId: payload.productId,
+      },
+    },
+  });
+
+  return result;
+};
+
 const getAllCouponOfVendor = async (
   vendorId: string,
   required: "expired" | "running"
@@ -124,6 +173,9 @@ const getAllCouponOfVendor = async (
           Product: true,
         },
       },
+    },
+    orderBy: {
+      expiryDate: "desc",
     },
   });
 
@@ -156,4 +208,5 @@ export const CouponService = {
   deleteCoupon,
   getAllCouponOfVendor,
   getSingleProductAllCoupons,
+  deleteCouponProduct,
 };

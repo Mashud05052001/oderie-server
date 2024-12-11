@@ -42,6 +42,18 @@ const deleteCoupon = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const deleteCouponProduct = catchAsync(async (req, res) => {
+  const result = await CouponService.deleteCouponProduct(
+    req.extendedUserData,
+    req.body
+  );
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Coupon product deleted successfully",
+    data: result,
+  });
+});
 
 const getAllCouponOfVendor = catchAsync(async (req, res) => {
   const required = req.query?.required === "expired" ? "expired" : "running";
@@ -71,6 +83,7 @@ export const CouponController = {
   createCoupon,
   updateCoupon,
   deleteCoupon,
+  deleteCouponProduct,
   getAllCouponOfVendor,
   getSingleProductAllCoupons,
 };
