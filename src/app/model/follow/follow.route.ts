@@ -4,8 +4,10 @@ import auth from "../../middleware/auth";
 
 const router = Router();
 
+// vendorID
 router.post("/:id", auth("CUSTOMER"), FollowController.addOrRemoveFollow);
 
+// vendorID
 router.get("/:id", FollowController.getFollowWithoutToken);
 
 router.get(

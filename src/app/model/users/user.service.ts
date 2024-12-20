@@ -110,6 +110,7 @@ const getUsers = async (
       skip: query.skip,
       take: query.limit,
       select: {
+        id: true,
         email: true,
         role: true,
         status: true,
@@ -127,6 +128,7 @@ const getUsers = async (
       skip: query.skip,
       take: query.limit,
       select: {
+        id: true,
         email: true,
         role: true,
         status: true,
@@ -155,9 +157,19 @@ const getMe = async (
   return user;
 };
 
+const getVendor = async (vendorId: string) => {
+  return await prisma.vendor.findUnique({
+    where: { id: vendorId },
+    include: {
+      _count: true,
+    },
+  });
+};
+
 export const UserService = {
   update,
   blacklistVendor,
   getUsers,
   getMe,
+  getVendor,
 };

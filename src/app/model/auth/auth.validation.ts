@@ -2,26 +2,33 @@ import { z } from "zod";
 import { UserRolesArray } from "./auth.constant";
 
 const registerValidationSchema = z.object({
-  body: z.object({
-    name: z.string({
-      required_error: "User name is required",
-      invalid_type_error: "User name must be string",
+  body: z
+    .object({
+      name: z.string({
+        required_error: "User name is required",
+        invalid_type_error: "User name must be a string",
+      }),
+      email: z
+        .string({ required_error: "User email is required" })
+        .email({ message: "Provide a valid email" }),
+      password: z.string({
+        required_error: "User password is required",
+        invalid_type_error: "User password must be a string",
+      }),
+      role: z
+        .enum(["CUSTOMER", "VENDOR"] as [string, ...string[]], {
+          required_error: "User role is required",
+          invalid_type_error: "User role must be either 'CUSTOMER' or 'VENDOR'",
+        })
+        .default("CUSTOMER"),
+      phone: z.string({ required_error: "Phone number is required" }),
+      address: z.string({ required_error: "Address is required" }),
+      description: z.string().optional(),
+    })
+    .refine((data) => data.role !== "VENDOR" || !!data.description, {
+      message: "*Description is required for vendors",
+      path: ["description"],
     }),
-    email: z
-      .string({ required_error: "User email is required" })
-      .email({ message: "Provide a valid email" }),
-    password: z.string({
-      required_error: "User password is required",
-      invalid_type_error: "User password must be string",
-    }),
-    role: z
-      .enum(UserRolesArray as [string, ...string[]], {
-        required_error: "User role is required",
-        invalid_type_error: `User role can be either 'CUSTOMER' or 'VENDOR' or 'ADMIN'`,
-      })
-      .default("CUSTOMER")
-      .optional(),
-  }),
 });
 
 const loginValidationSchema = z.object({

@@ -36,8 +36,8 @@ const createProduct = async (
     vendorId: vendorData.vendorId as string,
     img: images.files.map((imgInfo) => imgInfo.path),
   };
-  const result = await prisma.product.create({ data: productData });
 
+  const result = await prisma.product.create({ data: productData });
   return result;
 };
 
@@ -45,9 +45,11 @@ const getAllProducts = async (
   loginUserData: TExtendedUserData | null,
   filters: TProductFilterItems,
   paginateOptions: TPaginationOptions,
-  includeObj: TInclude
+  includeObj: TInclude,
+  isProductCouponInclude: boolean
 ) => {
   const andConditions: Prisma.ProductWhereInput[] = [];
+
   if (filters?.price) {
     const priceObj = calculateRange(filters.price);
     andConditions.push({
@@ -84,8 +86,26 @@ const getAllProducts = async (
   }
 
   const result = await prisma.product.findMany({
-    where: query.where,
-    include: includeObj,
+    where: {
+      ...query.where,
+    },
+    include: {
+      ...includeObj,
+      ...(isProductCouponInclude && {
+        ProductCoupon: {
+          where: {
+            Coupon: {
+              expiryDate: {
+                gte: new Date(),
+              },
+            },
+          },
+          select: {
+            Coupon: true,
+          },
+        },
+      }),
+    },
     skip: query.skip,
     take: query.limit,
     orderBy: query.orderBy,
@@ -125,10 +145,55 @@ const duplicateProduct = async (
   return await prisma.product.create({ data: duplicateProductData });
 };
 
-const getSingleProduct = async (id: string, includeObj: TInclude) => {
+const getSingleProduct = async (
+  id: string,
+  includeObj: TInclude,
+  isProductCouponInclude: boolean
+) => {
   const result = await prisma.product.findUnique({
     where: { id, isDeleted: false },
-    include: includeObj,
+    include: {
+      // ...includeObj,
+      // ...(isProductCouponInclude && {
+      //   ProductCoupon: {
+      //     where: {
+      //       Coupon: {
+      //         expiryDate: {
+      //           gte: new Date(),
+      //         },
+      //       },
+      //     },
+      //     select: {
+      //       Coupon: true,
+      //     },
+      //   },
+      // }),
+      Review: {
+        include: {
+          VendorResponse: true,
+        },
+      },
+      Vendor: {
+        include: {
+          _count: true,
+        },
+      },
+      _count: true,
+      Category: true,
+      Order: true,
+      ProductCoupon: {
+        where: {
+          Coupon: {
+            expiryDate: {
+              gte: new Date(),
+            },
+          },
+        },
+        select: {
+          Coupon: true,
+        },
+      },
+    },
   });
 
   if (!result) {

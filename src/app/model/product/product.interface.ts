@@ -4,6 +4,7 @@ export type TProductCreate = {
   description: string;
   price: number;
   quantity: number;
+  discount: number;
 };
 export type TProductUpdate = {
   categoryId?: string;

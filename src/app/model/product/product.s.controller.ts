@@ -36,12 +36,16 @@ const getAllProducts = catchAsync(async (req, res) => {
     allProductIncludes,
     req.query?.includes as string
   );
+  const isProductCouponInclude =
+    typeof req.query?.includes === "string" &&
+    req.query.includes.toLowerCase().includes("productcoupon");
 
   const result = await ProductService.getAllProducts(
     req?.extendedUserData,
     filters as TProductFilterItems,
     options,
-    includeObject
+    includeObject,
+    isProductCouponInclude
   );
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -56,10 +60,16 @@ const getSingleProduct = catchAsync(async (req, res) => {
     allProductIncludes,
     req.query?.includes as string
   );
+  const isProductCouponInclude =
+    typeof req.query?.includes === "string" &&
+    req.query.includes.toLowerCase().includes("productcoupon");
+
   const result = await ProductService.getSingleProduct(
     req.params?.id,
-    includeObject
+    includeObject,
+    isProductCouponInclude
   );
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -88,6 +98,7 @@ const updateProduct = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const duplicateProduct = catchAsync(async (req, res) => {
   const productId = req.params?.id;
   const userData = req?.extendedUserData;

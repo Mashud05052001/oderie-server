@@ -5,6 +5,9 @@ export type TRegisterUser = {
   password: string;
   name: string;
   role: UserRole;
+  phone: string;
+  address: string;
+  description: string;
 };
 
 export type TLoginUser = {

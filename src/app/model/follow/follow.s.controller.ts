@@ -27,11 +27,16 @@ const getFollowUsingToken = catchAsync(async (req, res) => {
 });
 
 const getFollowWithoutToken = catchAsync(async (req, res) => {
-  const result = await FollowService.getFollowWithoutToken(req.params?.id);
+  const userEmail = (req.query?.userEmail as string) ?? "";
+
+  const { success, result } = await FollowService.getFollowWithoutToken(
+    req.params?.id,
+    userEmail
+  );
   sendResponse(res, {
     statusCode: httpStatus.OK,
-    success: true,
-    message: `Vendor data get successfull`,
+    success: success as boolean,
+    message: `Vendor follow data get successfull`,
     data: result,
   });
 });

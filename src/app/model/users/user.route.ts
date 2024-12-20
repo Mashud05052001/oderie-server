@@ -27,6 +27,8 @@ router.patch(
 router.patch("/blacklist/:id", auth("ADMIN"), UserController.blacklistVendor);
 
 router.get("/", auth("ADMIN"), UserController.getUser);
+router.get("/vendor/:id", UserController.getVendor);
+
 router.get("/me", auth("ADMIN", "CUSTOMER", "VENDOR"), UserController.getMe);
 
 export const UserRoutes = router;

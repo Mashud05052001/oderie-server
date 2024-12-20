@@ -29,7 +29,13 @@ router.post(
   ProductController.duplicateProduct
 );
 
-router.get("/", authDecodeToken(), ProductController.getAllProducts);
+router.get(
+  "/",
+  authDecodeToken(),
+
+  ProductController.getAllProducts
+);
+
 router.get("/:id", ProductController.getSingleProduct);
 
 router.patch(

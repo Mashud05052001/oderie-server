@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import { JwtPayload } from "jsonwebtoken";
 import catchAsync from "../utils/catchAsync";
 import { jwtHelper } from "../utils/jwtHelper";
+import jwt from "jsonwebtoken";
 import { UserRole, UserStatus } from "@prisma/client";
 import AppError from "../errors/AppError";
 import { prisma } from "../config";
@@ -12,40 +13,41 @@ import { prisma } from "../config";
 const authDecodeToken = () => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const token = (req?.headers?.authorization as string)?.split(" ")[1];
-    if (!token) {
-      throw new AppError(httpStatus.UNAUTHORIZED, "Token is missing!");
+    if (token) {
+      const decoded = jwt.decode(token) as JwtPayload;
+      if (decoded?.email) {
+        const userData = await prisma.user.findUnique({
+          where: { email: decoded.email },
+          include: { Vendor: true },
+        });
+        if (!userData) {
+          return next();
+        } else if (
+          userData.status === "BLOCKED" ||
+          userData.status === "DELETED"
+        ) {
+          throw new AppError(
+            httpStatus.UNAUTHORIZED,
+            `User has been ${userData.status}`
+          );
+        }
+        let vendorId =
+          userData.role === "VENDOR" ? (userData?.Vendor?.id as string) : null;
+
+        req.user = decoded as JwtPayload;
+
+        req.extendedUserData = {
+          email: userData.email,
+          password: "",
+          role: userData.role,
+          status: userData.status,
+          userId: userData.id,
+          vendorId: vendorId,
+          profilePicture: "",
+          name: "",
+        };
+      }
     }
-    const decoded = jwtHelper.verifyAccessToken(token) as JwtPayload;
-
-    // DO user related work here
-    const userData = await prisma.user.findUnique({
-      where: { email: decoded.email },
-      include: { Vendor: true },
-    });
-    if (!userData) {
-      return next();
-    } else if (userData.status === "BLOCKED" || userData.status === "DELETED") {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        `User has been ${userData.status}`
-      );
-    }
-    let vendorId =
-      userData.role === "VENDOR" ? (userData?.Vendor?.id as string) : null;
-
-    req.user = decoded as JwtPayload;
-
-    req.extendedUserData = {
-      email: userData.email,
-      password: "",
-      role: userData.role,
-      status: userData.status,
-      userId: userData.id,
-      vendorId: vendorId,
-      profilePicture: "",
-      name: "",
-    };
-
     next();
   });
 };

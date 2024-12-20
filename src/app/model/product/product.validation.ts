@@ -6,6 +6,10 @@ const create = z.object({
     title: z.string().nonempty("Title is required"),
     description: z.string().nonempty("Description is required"),
     price: z.number().positive("Price must be a positive number"),
+    discount: z
+      .number()
+      .positive("Discount must be a positive number")
+      .max(100, "Discount must be less then 100"),
     quantity: z
       .number()
       .int("Quantity must be an integer")

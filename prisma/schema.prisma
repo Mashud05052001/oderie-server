@@ -55,10 +55,12 @@ model Vendor {
   phone         String?
   logo          String?
   description   String?
-  addresss      String?
+  address       String?
   isBlackListed Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  ratings       Int      @default(0)
+  ratingsCount  Int      @default(0)
 
   // Relations
   User           User             @relation(fields: [email], references: [email])
@@ -103,6 +105,8 @@ model Product {
   description String
   price       Float
   quantity    Int
+  discount    Int      @default(0)
+  ratings     Int      @default(0)
   isDeleted   Boolean  @default(false)
 
   //  discount

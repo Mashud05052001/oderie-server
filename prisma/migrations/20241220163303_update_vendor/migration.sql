@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "vendors" ADD COLUMN     "ratings" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "ratingsCount" INTEGER NOT NULL DEFAULT 0;

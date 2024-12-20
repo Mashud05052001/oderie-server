@@ -7,17 +7,23 @@ import { AuthValidation } from "./auth.validation";
 import auth from "../../middleware/auth";
 import { prisma } from "../../config";
 import { Prisma } from "@prisma/client";
+import { multerUpload } from "../../config/multer.config";
+import validateImageFileRequest from "../../middleware/validateImageFileRequest";
+import { ImageFileValidationSchema } from "../../zod/image.validation";
+import { parseBody } from "../../middleware/bodyParser";
 
 const router = Router();
 
 router.get("/all", async (req, res) => {
-  // const isUserExist = await prisma.$queryRaw(Prisma.sql`SELECT * FROM users`);
   const isUserExist = await prisma.user.findMany();
   console.log(isUserExist);
 });
 
 router.post(
   "/register",
+  multerUpload.single("file"),
+  validateImageFileRequest(ImageFileValidationSchema, true),
+  parseBody,
   validateRequest(AuthValidation.registerValidationSchema),
   AuthController.registerUser
 );

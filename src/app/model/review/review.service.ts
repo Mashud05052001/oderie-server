@@ -50,8 +50,9 @@ const createReview = async (
     );
   }
 
-  await prisma.product.findUniqueOrThrow({
+  const productData = await prisma.product.findUniqueOrThrow({
     where: { id: payload.productId },
+    include: { _count: true, Vendor: true },
   });
   const orderInfo = await prisma.order.findUniqueOrThrow({
     where: {
@@ -71,9 +72,33 @@ const createReview = async (
       "You cannot review on a product which you won't order it"
     );
   }
-  const review = await prisma.review.create({ data: reviewData });
 
-  return review;
+  const productPrevReviewCount = productData._count.Review;
+  const productTotalRatings =
+    (productData.ratings * productPrevReviewCount + payload.ratings) /
+    (productPrevReviewCount + 1);
+  const vendorPrevRatingCount = productData?.Vendor?.ratingsCount;
+  const vendorPrevRatings = productData?.Vendor?.ratings;
+  const updatedVendorRatings =
+    (vendorPrevRatings * vendorPrevRatingCount + payload.ratings) /
+    (vendorPrevRatingCount + 1);
+
+  const result = await prisma.$transaction(async (tsx) => {
+    await tsx.product.update({
+      where: { id: payload.productId },
+      data: { ratings: productTotalRatings },
+    });
+    await tsx.vendor.update({
+      where: { id: productData?.vendorId },
+      data: {
+        ratingsCount: { increment: 1 },
+        ratings: updatedVendorRatings,
+      },
+    });
+    return await tsx.review.create({ data: reviewData });
+  });
+
+  return result;
 };
 
 const updateReview = async (

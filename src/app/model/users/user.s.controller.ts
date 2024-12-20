@@ -73,9 +73,20 @@ const getMe = catchAsync(async (req, res) => {
   });
 });
 
+const getVendor = catchAsync(async (req, res) => {
+  const result = await UserService.getVendor(req.params?.id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Vendor data fetched successfully`,
+    data: result,
+  });
+});
+
 export const UserController = {
   update,
   blacklistVendor,
   getUser,
   getMe,
+  getVendor,
 };

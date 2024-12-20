@@ -11,7 +11,7 @@ import {
   TResetPassword,
   TSendContactEmail,
 } from "./auth.interface";
-import { User } from "@prisma/client";
+import { Profile, User, Vendor } from "@prisma/client";
 import { jwtHelper } from "../../utils/jwtHelper";
 import { TExtendedUserData, TJwtPayload } from "../../interface/jwt.type";
 import {
@@ -21,8 +21,9 @@ import {
 import { EmailHelper } from "../../utils/emailSender";
 import moment from "moment";
 import { generateRandomCode } from "../../shared/generateResetCode";
+import { TImageFile } from "../../interface/image.interface";
 
-const registerUser = async (payload: TRegisterUser) => {
+const registerUser = async (payload: TRegisterUser, imageFile: TImageFile) => {
   const user = await prisma.user.findUnique({
     where: { email: payload?.email },
   });
@@ -43,16 +44,29 @@ const registerUser = async (payload: TRegisterUser) => {
       password: hashedPassword,
       role: payload.role,
     };
-    const userOrVendorData = { name: payload.name, email: payload.email };
+    const commonData = {
+      name: payload.name,
+      email: payload.email,
+      phone: payload.phone,
+      address: payload.address,
+    };
+    const profileData = {
+      ...commonData,
+      img: imageFile?.path,
+    };
+    const vendorData = {
+      ...commonData,
+      logo: imageFile.path,
+      description: payload.description,
+    };
 
-    const userData = await prisma.user.create({
+    const userData = await tsx.user.create({
       data: registerUserData,
     });
-
     if (payload.role === "CUSTOMER") {
-      await prisma.profile.create({ data: userOrVendorData });
+      await tsx.profile.create({ data: profileData });
     } else if (payload.role === "VENDOR") {
-      await prisma.vendor.create({ data: userOrVendorData });
+      await tsx.vendor.create({ data: vendorData });
     }
     userData.password = "";
     userData.resetPasswordCode = "";
@@ -139,7 +153,7 @@ const loginUser = async (payload: TLoginUser) => {
     const isPasswordMatched =
       await bcryptHelper.compareHashedPasswordWithPlainText(
         payload?.password as string,
-        isUserExist.password
+        isUserExist.password ?? ""
       );
 
     if (!isPasswordMatched) {
