@@ -1,7 +1,6 @@
 import { OrderStatus } from "@prisma/client";
 
 export type TCreateOrder = {
-  userId: string;
   vendorId: string;
   status?: OrderStatus;
   totalPrice: number;

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import httpStatus from "http-status";
 import { prisma } from "../../config";
 import AppError from "../../errors/AppError";
@@ -7,7 +8,6 @@ import { TPaginationOptions } from "../../interface/model.type";
 import { returnMetaData } from "../../shared/returnMetaData";
 import { queryBuilder } from "../../utils/searchBuilder";
 import { TCreateReview } from "./review.interface";
-import { Prisma } from "@prisma/client";
 
 const getSingleProductReview = async (
   productId: string,
@@ -23,9 +23,13 @@ const getSingleProductReview = async (
     orderBy: query.orderBy,
     skip: query.skip,
     take: query.limit,
+    include: {
+      VendorResponse: true,
+      User: { select: { id: true, Profile: true } },
+    },
   });
-  const total = await prisma.review.count({ where: { productId } });
 
+  const total = await prisma.review.count({ where: { productId } });
   return returnMetaData(total, query, result);
 };
 
@@ -36,33 +40,48 @@ const createReview = async (
 ) => {
   const { orderId, ...others } = payload;
   const reviewData = {
-    ...others,
     userId: userInfo.userId,
     productImg: imgFile ? imgFile.path : "",
+    orderId,
+    ...others,
   };
-  const isExist = await prisma.review.findFirst({
-    where: { userId: userInfo.userId, productId: payload.productId },
+  const productData = await prisma.product.findUniqueOrThrow({
+    where: { id: payload.productId },
+    include: { _count: true, Vendor: true },
   });
-  if (isExist) {
+
+  const isReviewExist = await prisma.review.findFirst({
+    // where: { userId: userInfo.userId, productId: payload.productId },
+    where: { userId: userInfo.userId, productId: payload.productId, orderId },
+  });
+
+  if (isReviewExist) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "You cannot review on a product multiple time"
     );
   }
 
-  const productData = await prisma.product.findUniqueOrThrow({
-    where: { id: payload.productId },
-    include: { _count: true, Vendor: true },
-  });
-  const orderInfo = await prisma.order.findUniqueOrThrow({
+  const orderInfo = await prisma.order.findUnique({
     where: {
       id: orderId,
       userId: userInfo.userId,
       paymentStatus: "PAID",
-      status: "DELIVERED",
+      status: { in: ["PROCESSING", "DELIVERED"] },
     },
     include: { OrderItem: true },
   });
+  if (!orderInfo) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Order not found. Please contact with us."
+    );
+  } else if (orderInfo?.status === "PROCESSING") {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "You can only give order after successfully received the product."
+    );
+  }
   const isProductReallyOrderedBySameUser = orderInfo.OrderItem.find(
     (item) => item.productId === payload.productId
   );

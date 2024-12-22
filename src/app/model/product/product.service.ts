@@ -46,10 +46,18 @@ const getAllProducts = async (
   filters: TProductFilterItems,
   paginateOptions: TPaginationOptions,
   includeObj: TInclude,
-  isProductCouponInclude: boolean
+  isProductCouponInclude: boolean,
+  productIds: string
 ) => {
   const andConditions: Prisma.ProductWhereInput[] = [];
-
+  if (productIds) {
+    andConditions.push({
+      id: {
+        in: productIds.split(","),
+      },
+    });
+  }
+  console.log(productIds, andConditions);
   if (filters?.price) {
     const priceObj = calculateRange(filters.price);
     andConditions.push({
@@ -145,11 +153,7 @@ const duplicateProduct = async (
   return await prisma.product.create({ data: duplicateProductData });
 };
 
-const getSingleProduct = async (
-  id: string,
-  includeObj: TInclude,
-  isProductCouponInclude: boolean
-) => {
+const getSingleProduct = async (id: string, includeObj: TInclude) => {
   const result = await prisma.product.findUnique({
     where: { id, isDeleted: false },
     include: {
@@ -168,20 +172,20 @@ const getSingleProduct = async (
       //     },
       //   },
       // }),
-      Review: {
+      Review: includeObj?.Review && {
         include: {
           VendorResponse: true,
         },
       },
-      Vendor: {
+      Vendor: includeObj?.Vendor && {
         include: {
           _count: true,
         },
       },
-      _count: true,
-      Category: true,
-      Order: true,
-      ProductCoupon: {
+      _count: includeObj?._count && true,
+      Category: includeObj?.Category && true,
+      Order: includeObj?.Order && true,
+      ProductCoupon: includeObj?.ProductCoupon && {
         where: {
           Coupon: {
             expiryDate: {

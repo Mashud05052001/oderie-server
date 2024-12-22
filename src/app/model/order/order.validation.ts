@@ -7,7 +7,6 @@ const orderStatus = ["PENDING", "PROCESSING", "DELIVERED", "CANCELLED"];
 // Define the Zod schema for the TCreateOrder type
 const create = z.object({
   body: z.object({
-    userId: z.string().uuid(),
     vendorId: z.string().uuid(),
     status: z
       .enum(orderStatus as [string, ...string[]])

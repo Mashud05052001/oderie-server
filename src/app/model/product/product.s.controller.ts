@@ -8,6 +8,7 @@ import { Prisma } from "@prisma/client";
 import {
   allProductIncludes,
   paginateProps,
+  singleProductIncludes,
 } from "../../constant/model.constant";
 import { productFilterableFields } from "./product.constant";
 import { TProductFilterItems } from "./product.interface";
@@ -27,10 +28,9 @@ const createProduct = catchAsync(async (req, res) => {
 });
 
 const getAllProducts = catchAsync(async (req, res) => {
-  console.log(req.query);
+  const productIds = req.query?.productIds as string;
   const options = pick(req.query, paginateProps);
   const filters = pick(req.query, productFilterableFields);
-  console.log(filters);
 
   const includeObject = pickIncludeObject<Prisma.ProductInclude>(
     allProductIncludes,
@@ -45,7 +45,8 @@ const getAllProducts = catchAsync(async (req, res) => {
     filters as TProductFilterItems,
     options,
     includeObject,
-    isProductCouponInclude
+    isProductCouponInclude,
+    productIds
   );
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -57,17 +58,13 @@ const getAllProducts = catchAsync(async (req, res) => {
 
 const getSingleProduct = catchAsync(async (req, res) => {
   const includeObject = pickIncludeObject<Prisma.ProductInclude>(
-    allProductIncludes,
+    singleProductIncludes,
     req.query?.includes as string
   );
-  const isProductCouponInclude =
-    typeof req.query?.includes === "string" &&
-    req.query.includes.toLowerCase().includes("productcoupon");
 
   const result = await ProductService.getSingleProduct(
     req.params?.id,
-    includeObject,
-    isProductCouponInclude
+    includeObject
   );
 
   sendResponse(res, {

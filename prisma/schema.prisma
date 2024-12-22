@@ -148,9 +148,10 @@ model Coupon {
 
 model Review {
   id         String   @id @default(uuid())
-  productImg String?
+  productImg String
   message    String
   ratings    Int
+  orderId    String
   productId  String
   userId     String
   createdAt  DateTime @default(now())
@@ -160,6 +161,7 @@ model Review {
   // Relations
   Product        Product         @relation(fields: [productId], references: [id])
   User           User            @relation(fields: [userId], references: [id])
+  Order          Order           @relation(fields: [orderId], references: [id])
   VendorResponse VendorResponse?
 
   @@map("reviews")
@@ -212,6 +214,7 @@ model Order {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   OrderItem OrderItem[]
+  Review    Review[]
 
   @@map("orders")
 }

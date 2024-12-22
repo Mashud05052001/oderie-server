@@ -2,10 +2,19 @@ import { Prisma } from "@prisma/client";
 
 export const allProductIncludes: (keyof Prisma.ProductInclude)[] = [
   "Category",
-  // "ProductCoupon",
+  "ProductCoupon",
   "Order",
   "Review",
   "Vendor",
+  "_count",
+];
+
+export const singleProductIncludes: (keyof Prisma.ProductInclude)[] = [
+  "Category",
+  "Order",
+  "ProductCoupon",
+  "Vendor",
+  "Review",
   "_count",
 ];
 

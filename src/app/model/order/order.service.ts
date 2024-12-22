@@ -29,7 +29,12 @@ const createOrder = async (
   res: Response,
   userInfo: TExtendedUserData
 ) => {
-  const { products, cancleUrl, ...orderData } = payload;
+  const { products, cancleUrl, ...othersData } = payload;
+  const orderData = {
+    ...othersData,
+    userId: userInfo?.userId,
+  };
+
   const vendorData = await prisma.vendor.findUnique({
     where: {
       id: payload.vendorId,
