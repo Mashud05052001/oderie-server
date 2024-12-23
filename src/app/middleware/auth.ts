@@ -15,6 +15,7 @@ const auth = (...requiredRoles: UserRole[]) => {
     if (!token) {
       throw new AppError(httpStatus.UNAUTHORIZED, "Token is missing!");
     }
+
     const decoded = jwtHelper.verifyAccessToken(token) as JwtPayload;
 
     if (requiredRoles && !requiredRoles.includes(decoded?.role)) {
@@ -61,7 +62,7 @@ const auth = (...requiredRoles: UserRole[]) => {
     req.user = decoded as JwtPayload;
     req.extendedUserData = {
       email: userData.email,
-      password: userData.password,
+      password: userData?.password || "",
       role: userData.role,
       status: userData.status,
       userId: userData.id,

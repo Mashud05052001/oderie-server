@@ -3,12 +3,15 @@
 import catchAsync from "../utils/catchAsync";
 import { AnyZodObject } from "zod";
 
-const validateRequest = (schema: AnyZodObject) => {
+const validateRequest = (schema: AnyZodObject, skipValidation = false) => {
   return catchAsync(async (req, res, next) => {
+    if (skipValidation && req?.file) {
+      return next();
+    }
     const data = {
       body: req?.body,
     };
-
+    console.log(data);
     const parsedData = await schema.parseAsync(data);
     req.body = parsedData?.body;
     next();

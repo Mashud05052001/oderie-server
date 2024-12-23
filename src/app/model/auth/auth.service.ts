@@ -194,10 +194,11 @@ const changePassword = async (
     );
   }
 
-  const isPasswordMatched = bcryptHelper.compareHashedPasswordWithPlainText(
-    payload.oldPassword,
-    extendedUserData.password
-  );
+  const isPasswordMatched =
+    await bcryptHelper.compareHashedPasswordWithPlainText(
+      payload.oldPassword,
+      extendedUserData.password
+    );
 
   if (extendedUserData.role === "VENDOR") {
     const vendorData = await prisma.vendor.findUnique({

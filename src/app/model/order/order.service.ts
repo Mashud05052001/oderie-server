@@ -225,10 +225,10 @@ const getAllOrders = async (
     take: quary.limit,
     include:
       userData.role === "ADMIN"
-        ? { User: { select: { Profile: true } }, Vendor: true }
+        ? { User: { select: { Profile: true } }, Vendor: true, OrderItem: true }
         : userData.role === "VENDOR"
-        ? { User: { select: { Profile: true } } }
-        : { Vendor: true },
+        ? { User: { select: { Profile: true } }, OrderItem: true }
+        : { Vendor: true, OrderItem: true },
   });
 
   // Count total orders based on query conditions

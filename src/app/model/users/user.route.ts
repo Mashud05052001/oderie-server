@@ -17,9 +17,9 @@ router.patch(
       validateImageFileRequest(ImageFileValidationSchema, true);
       req.body = JSON.parse(req.body?.data);
     }
-    validateRequest(UserValidation.update);
     next();
   },
+  validateRequest(UserValidation.update, true),
   UserController.update
 );
 

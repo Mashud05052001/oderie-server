@@ -30,12 +30,10 @@ router.patch(
     if (req.file) {
       validateImageFileRequest(ImageFileValidationSchema, false);
       req.body = JSON.parse(req.body.data);
-      validateRequest(CategoryValidation.create);
-    } else {
-      validateRequest(CategoryValidation.create);
     }
     next();
   },
+  validateRequest(CategoryValidation.create),
   CategoryController.updateCategory
 );
 

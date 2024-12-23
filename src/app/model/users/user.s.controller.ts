@@ -17,7 +17,7 @@ const update = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Name is created successfully",
+    message: "User updated successfully",
     data: result,
   });
 });

@@ -150,7 +150,16 @@ const getMe = async (
 ) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userInfo.userId, status: "ACTIVE" },
-    include: includeObject,
+    // include: includeObject,
+    include: {
+      ...includeObject,
+      Follow: includeObject?.Follow && {
+        select: {
+          User: userInfo?.role !== "CUSTOMER" && true,
+          Vendor: userInfo?.role !== "VENDOR" && true,
+        },
+      },
+    },
   });
 
   user["password"] = null;

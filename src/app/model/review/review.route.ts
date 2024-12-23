@@ -21,10 +21,9 @@ router.post(
       validateImageFileRequest(ImageFileValidationSchema, false);
       req.body = JSON.parse(req.body.data);
     }
-    validateRequest(ReviewValidation.create);
     next();
   },
-
+  validateRequest(ReviewValidation.create),
   ReviewController.createReview
 );
 
