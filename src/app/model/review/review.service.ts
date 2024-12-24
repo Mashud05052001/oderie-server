@@ -149,9 +149,37 @@ const deleteReview = async (reviewId: string, userInfo: TExtendedUserData) => {
   return "Review deleted successfully";
 };
 
+const getMyAllReviews = async (
+  userInfo: TExtendedUserData,
+  options: TPaginationOptions
+) => {
+  const andCondition: Prisma.ReviewWhereInput[] = [
+    { userId: userInfo?.userId },
+  ];
+
+  const query = queryBuilder({
+    pagination: options,
+    additionalConditions: andCondition,
+  });
+
+  const result = await prisma.review.findMany({
+    where: query?.where,
+    include: {
+      Product: true,
+      VendorResponse: true,
+    },
+  });
+  const total = await prisma.review.count({
+    where: query?.where,
+  });
+
+  return returnMetaData(total, query, result);
+};
+
 export const ReviewService = {
   getSingleProductReview,
   createReview,
   updateReview,
   deleteReview,
+  getMyAllReviews,
 };

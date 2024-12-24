@@ -48,12 +48,15 @@ const changeOrderStatus = catchAsync(async (req, res) => {
 });
 
 const getAllOrders = catchAsync(async (req, res) => {
+  const isRemainingReview =
+    req.query?.remainingReview === "true" ? true : false;
   const filters = pick(req.query, OrderFilterItems);
   const options = pick(req.query, paginateProps);
   const result = await OrderService.getAllOrders(
     req.extendedUserData,
     filters,
-    options
+    options,
+    isRemainingReview
   );
   sendResponse(res, {
     statusCode: httpStatus.OK,

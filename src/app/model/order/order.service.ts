@@ -1,5 +1,5 @@
 import { OrderStatus, Prisma, UserRole } from "@prisma/client";
-import { Response } from "express";
+import { query, Response } from "express";
 import httpStatus from "http-status";
 import { prisma } from "../../config";
 import AppError from "../../errors/AppError";
@@ -174,10 +174,12 @@ ADMIN => Can see all orders
 CUSTOMER => Can see only it's orders
 VENDOR => Can see only it's orders. For vendor in query if vendorId found it returns error
 */
+
 const getAllOrders = async (
   userData: TExtendedUserData,
   filters: any,
-  options: TPaginationOptions
+  options: TPaginationOptions,
+  isRemainingReview: boolean
 ) => {
   const andConditions: Prisma.OrderWhereInput[] = [];
   if (filters?.vendorId && userData?.role === "VENDOR") {
@@ -218,21 +220,68 @@ const getAllOrders = async (
   });
 
   // Fetch orders based on role and query
+
   const result = await prisma.order.findMany({
-    where: quary.where,
+    where:
+      isRemainingReview && userData?.role === "CUSTOMER"
+        ? {
+            ...quary.where,
+            status: "DELIVERED",
+            OrderItem: {
+              some: { Order: { Review: { none: {} } } },
+            },
+          }
+        : quary.where,
     orderBy: quary.orderBy,
     skip: quary.skip,
     take: quary.limit,
     include:
       userData.role === "ADMIN"
-        ? { User: { select: { Profile: true } }, Vendor: true, OrderItem: true }
+        ? {
+            User: { select: { Profile: true } },
+            Vendor: true,
+            OrderItem: true,
+            Payment: true,
+          }
         : userData.role === "VENDOR"
-        ? { User: { select: { Profile: true } }, OrderItem: true }
-        : { Vendor: true, OrderItem: true },
+        ? {
+            User: { select: { Profile: true } },
+            OrderItem: true,
+            Payment: { select: { transactionId: true } },
+          }
+        : {
+            // Customer
+            Vendor: true,
+            Payment: { select: { transactionId: true } },
+            OrderItem: {
+              include: {
+                Product: { select: { title: true, img: true, id: true } },
+                Order: {
+                  include: {
+                    _count: true,
+                    Review: {
+                      select: { productId: true, message: true, orderId: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
   });
 
   // Count total orders based on query conditions
-  const total = await prisma.order.count({ where: quary.where });
+  const total = await prisma.order.count({
+    where:
+      isRemainingReview && userData?.role === "CUSTOMER"
+        ? {
+            ...quary.where,
+            status: "DELIVERED",
+            OrderItem: {
+              some: { Order: { Review: { none: {} } } },
+            },
+          }
+        : quary.where,
+  });
 
   // Return metadata with result
   return returnMetaData(total, quary, result);

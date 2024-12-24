@@ -9,6 +9,8 @@ import { ReviewValidation } from "./review.validation";
 
 const router = Router();
 
+router.get("/", auth("CUSTOMER"), ReviewController.getMyAllReviews);
+
 // productId
 router.get("/:id", ReviewController.getSingleProductReview);
 
@@ -23,7 +25,7 @@ router.post(
     }
     next();
   },
-  validateRequest(ReviewValidation.create),
+  validateRequest(ReviewValidation.create, true),
   ReviewController.createReview
 );
 
