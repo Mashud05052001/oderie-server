@@ -150,19 +150,43 @@ const getMe = async (
 ) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userInfo.userId, status: "ACTIVE" },
-    // include: includeObject,
     include: {
       ...includeObject,
-      Follow: includeObject?.Follow && {
-        select: {
-          User: userInfo?.role !== "CUSTOMER" && true,
-          Vendor: userInfo?.role !== "VENDOR" && true,
+      _count: includeObject?._count && userInfo?.role !== "VENDOR" && true,
+      Follow: includeObject?.Follow &&
+        userInfo?.role !== "VENDOR" && {
+          select: { User: true },
         },
-      },
+      Vendor: includeObject?.Vendor &&
+        userInfo?.role === "VENDOR" && {
+          include: {
+            Follow: {
+              select: {
+                User: {
+                  select: {
+                    Profile: {
+                      select: {
+                        address: true,
+                        name: true,
+                        email: true,
+                        img: true,
+                        id: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            _count: true,
+          },
+        },
     },
   });
 
-  user["password"] = null;
+  delete (user as Record<string, unknown>)?.password;
+  delete (user as Record<string, unknown>)?.resetPasswordCode;
+  delete (user as Record<string, unknown>)?.resetPasswordExpiredDate;
+
   return user;
 };
 

@@ -9,7 +9,8 @@ import { ReviewValidation } from "./review.validation";
 
 const router = Router();
 
-router.get("/", auth("CUSTOMER"), ReviewController.getMyAllReviews);
+// Customer & Vendor can get it's all product reviews
+router.get("/", auth("CUSTOMER", "VENDOR"), ReviewController.getMyAllReviews);
 
 // productId
 router.get("/:id", ReviewController.getSingleProductReview);

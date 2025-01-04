@@ -2,6 +2,8 @@ import httpStatus from "http-status";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { CouponService } from "./coupon.service";
+import pick from "../../utils/pick";
+import { paginateProps } from "../../constant/model.constant";
 
 const createCoupon = catchAsync(async (req, res) => {
   const result = await CouponService.createCoupon(
@@ -56,10 +58,15 @@ const deleteCouponProduct = catchAsync(async (req, res) => {
 });
 
 const getAllCouponOfVendor = catchAsync(async (req, res) => {
+  const options = pick(req?.query, paginateProps);
   const required = req.query?.required === "expired" ? "expired" : "running";
+  const userInfo = req?.extendedUserData;
+  const vendorId =
+    userInfo?.role === "VENDOR" ? userInfo?.vendorId! : req?.params?.id;
   const result = await CouponService.getAllCouponOfVendor(
-    req.params.id,
-    required
+    vendorId,
+    required,
+    options
   );
   sendResponse(res, {
     statusCode: httpStatus.OK,

@@ -7,13 +7,12 @@ import { CouponValidation } from "./coupon.validation";
 const router = Router();
 
 // Get single product all coupons.
-router.get("/:id", CouponController.getSingleProductAllCoupons);
 
-router.get(
-  "/vendor/:id",
-  auth("VENDOR", "ADMIN"),
-  CouponController.getAllCouponOfVendor
-);
+router.get("/vendor/:id", auth("ADMIN"), CouponController.getAllCouponOfVendor);
+
+router.get("/vendor", auth("VENDOR"), CouponController.getAllCouponOfVendor);
+
+router.get("/:id", CouponController.getSingleProductAllCoupons);
 
 router.post(
   "/",
@@ -23,18 +22,19 @@ router.post(
 );
 
 router.patch(
+  "/product",
+  validateRequest(CouponValidation.deleteCouponProduct),
+  auth("ADMIN", "VENDOR"),
+  CouponController.deleteCouponProduct
+);
+
+router.patch(
   "/:id",
   auth("VENDOR"),
   validateRequest(CouponValidation.update),
   CouponController.updateCoupon
 );
 
-router.delete(
-  "/product",
-  validateRequest(CouponValidation.deleteCouponProduct),
-  auth("ADMIN", "VENDOR"),
-  CouponController.deleteCouponProduct
-);
 router.delete("/:id", auth("ADMIN", "VENDOR"), CouponController.deleteCoupon);
 
 export const CouponRoutes = router;

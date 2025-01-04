@@ -6,9 +6,12 @@ import pick from "../../utils/pick";
 import { paginateProps } from "../../constant/model.constant";
 
 const getMyAllReviews = catchAsync(async (req, res, next) => {
-  const options = pick(req.query, paginateProps);
+  const paginateOptions = pick(req.query, paginateProps);
+  const options = pick(req.query, ["isVendorResponse"]);
+
   const result = await ReviewService.getMyAllReviews(
     req?.extendedUserData,
+    paginateOptions,
     options
   );
   sendResponse(res, {
@@ -18,6 +21,7 @@ const getMyAllReviews = catchAsync(async (req, res, next) => {
     data: result,
   });
 });
+
 const getSingleProductReview = catchAsync(async (req, res, next) => {
   const options = pick(req.query, paginateProps);
   const result = await ReviewService.getSingleProductReview(

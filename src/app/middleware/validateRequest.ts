@@ -11,7 +11,7 @@ const validateRequest = (schema: AnyZodObject, skipValidation = false) => {
     const data = {
       body: req?.body,
     };
-    console.log(data, "asndijasbdjibasdji");
+
     const parsedData = await schema.parseAsync(data);
     req.body = parsedData?.body;
     next();

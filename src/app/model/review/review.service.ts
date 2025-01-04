@@ -39,16 +39,19 @@ const createReview = async (
   imgFile: TImageFile | undefined
 ) => {
   const { orderId, ...others } = payload;
-  const reviewData = {
-    userId: userInfo.userId,
-    productImg: imgFile ? imgFile.path : "",
-    orderId,
-    ...others,
-  };
+
   const productData = await prisma.product.findUniqueOrThrow({
     where: { id: payload.productId },
     include: { _count: true, Vendor: true },
   });
+
+  const reviewData = {
+    userId: userInfo.userId,
+    productImg: imgFile ? imgFile.path : "",
+    orderId,
+    vendorId: productData?.Vendor?.id,
+    ...others,
+  };
 
   const isReviewExist = await prisma.review.findFirst({
     // where: { userId: userInfo.userId, productId: payload.productId },
@@ -149,16 +152,25 @@ const deleteReview = async (reviewId: string, userInfo: TExtendedUserData) => {
   return "Review deleted successfully";
 };
 
+// Customer | Vendor
 const getMyAllReviews = async (
   userInfo: TExtendedUserData,
-  options: TPaginationOptions
+  paginateOptions: TPaginationOptions,
+  options: Record<string, unknown>
 ) => {
+  const userRole = userInfo?.role;
   const andCondition: Prisma.ReviewWhereInput[] = [
-    { userId: userInfo?.userId },
+    userRole === "CUSTOMER"
+      ? { userId: userInfo?.userId }
+      : { vendorId: userInfo?.vendorId! },
   ];
-
+  if (userRole === "VENDOR" && options?.isVendorResponse === "true") {
+    andCondition.push({ NOT: { VendorResponse: null } });
+  } else if (userRole === "VENDOR" && options?.isVendorResponse === "false") {
+    andCondition.push({ VendorResponse: null });
+  }
   const query = queryBuilder({
-    pagination: options,
+    pagination: paginateOptions,
     additionalConditions: andCondition,
   });
 
@@ -167,7 +179,10 @@ const getMyAllReviews = async (
     include: {
       Product: true,
       VendorResponse: true,
+      User: userInfo?.role === "VENDOR" ? { select: { Profile: true } } : false,
     },
+    skip: query?.skip,
+    take: query?.limit,
   });
   const total = await prisma.review.count({
     where: query?.where,

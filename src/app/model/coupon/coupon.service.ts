@@ -1,10 +1,13 @@
-import { Coupon, ProductCoupon } from "@prisma/client";
+import { Coupon, Prisma, ProductCoupon } from "@prisma/client";
 import { TExtendedUserData } from "../../interface/jwt.type";
 import { TCouponCreate } from "./coupon.interface";
 import { generateRandomCode } from "../../shared/generateResetCode";
 import { prisma } from "../../config";
 import AppError from "../../errors/AppError";
 import httpStatus, { BAD_REQUEST } from "http-status";
+import { returnMetaData } from "../../shared/returnMetaData";
+import { TPaginationOptions } from "../../interface/model.type";
+import { queryBuilder } from "../../utils/searchBuilder";
 
 const createCoupon = async (
   userInfo: TExtendedUserData,
@@ -159,14 +162,21 @@ const deleteCouponProduct = async (
 
 const getAllCouponOfVendor = async (
   vendorId: string,
-  required: "expired" | "running"
+  required: "expired" | "running",
+  pagination: TPaginationOptions
 ) => {
-  const coupons = await prisma.coupon.findMany({
-    where: {
+  const additionalConditions: Prisma.CouponWhereInput[] = [
+    {
       vendorId,
       expiryDate:
         required === "expired" ? { lt: new Date() } : { gt: new Date() },
     },
+  ];
+
+  const query = queryBuilder({ pagination, additionalConditions });
+
+  const coupons = await prisma.coupon.findMany({
+    where: query?.where,
     include: {
       ProductCoupon: {
         include: {
@@ -177,9 +187,13 @@ const getAllCouponOfVendor = async (
     orderBy: {
       expiryDate: "desc",
     },
+    skip: query?.skip,
+    take: query?.limit,
   });
 
-  return coupons;
+  const total = await prisma.coupon.count({ where: query?.where });
+
+  return returnMetaData(total, query, coupons);
 };
 
 const getSingleProductAllCoupons = async (productId: string) => {

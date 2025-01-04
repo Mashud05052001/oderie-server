@@ -68,6 +68,7 @@ model Vendor {
   VendorResponse VendorResponse[]
   Order          Order[]
   Follow         Follow[]
+  ProductReviews Review[]
 
   @@map("vendors")
 }
@@ -153,6 +154,7 @@ model Review {
   ratings    Int
   orderId    String
   productId  String
+  vendorId   String
   userId     String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -162,6 +164,7 @@ model Review {
   Product        Product         @relation(fields: [productId], references: [id])
   User           User            @relation(fields: [userId], references: [id])
   Order          Order           @relation(fields: [orderId], references: [id])
+  Vendor         Vendor          @relation(fields: [vendorId], references: [id])
   VendorResponse VendorResponse?
 
   @@map("reviews")

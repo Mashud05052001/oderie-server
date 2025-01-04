@@ -28,12 +28,12 @@ router.patch(
   multerUpload.single("file"),
   (req, res, next) => {
     if (req.file) {
-      validateImageFileRequest(ImageFileValidationSchema, false);
+      validateImageFileRequest(ImageFileValidationSchema, true);
       req.body = JSON.parse(req.body.data);
     }
     next();
   },
-  validateRequest(CategoryValidation.create),
+  validateRequest(CategoryValidation.create, true),
   CategoryController.updateCategory
 );
 
