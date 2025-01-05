@@ -246,7 +246,20 @@ const getAllOrders = async (
         : userData.role === "VENDOR"
         ? {
             User: { select: { Profile: true } },
-            OrderItem: true,
+            OrderItem: {
+              select: {
+                id: true,
+                quantity: true,
+                Product: {
+                  select: {
+                    title: true,
+                    img: true,
+                    id: true,
+                    Category: { select: { name: true, icon: true } },
+                  },
+                },
+              },
+            },
             Payment: { select: { transactionId: true } },
           }
         : {
