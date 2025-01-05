@@ -32,12 +32,13 @@ const createOrder = catchAsync(async (req, res) => {
 });
 
 const changeOrderStatus = catchAsync(async (req, res) => {
-  let status: OrderStatus = "CANCELLED";
-  if (req?.query.status === "DELIVERED") status = "DELIVERED";
+  // let status: OrderStatus = "CANCELLED";
+  // if (req?.query.status === "DELIVERED") status = "DELIVERED";
+  const status = req?.body?.status;
   const result = await OrderService.changeOrderStatus(
     req.params?.id,
     req.extendedUserData,
-    { status }
+    status
   );
   sendResponse(res, {
     statusCode: httpStatus.OK,

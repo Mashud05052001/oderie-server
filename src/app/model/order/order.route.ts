@@ -18,6 +18,7 @@ router.post(
 router.patch(
   "/:id",
   auth("VENDOR", "CUSTOMER"),
+  validateRequest(OrderValidation.changeStatus),
   OrderController.changeOrderStatus
 );
 

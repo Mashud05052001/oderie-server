@@ -26,6 +26,16 @@ const create = z.object({
   }),
 });
 
+const changeStatus = z.object({
+  body: z.object({
+    status: z.enum(["DELIVERED", "CANCELLED"] as [string, ...string[]], {
+      message: "Order status must be either DELEVERED or CANCELLED",
+      required_error: "Order status is required",
+    }),
+  }),
+});
+
 export const OrderValidation = {
   create,
+  changeStatus,
 };

@@ -111,20 +111,20 @@ const createOrder = async (
 const changeOrderStatus = async (
   orderId: string,
   userInfo: TExtendedUserData,
-  payload: { status: "DELIVERED" | "CANCELLED" }
+  updatedStatus: "DELIVERED" | "CANCELLED"
 ) => {
-  if (userInfo.role === "VENDOR" && payload.status === "CANCELLED") {
+  if (userInfo.role === "VENDOR" && updatedStatus === "CANCELLED") {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Vendor cannot cancle a product"
     );
-  } else if (userInfo.role === "CUSTOMER" && payload.status === "DELIVERED") {
+  } else if (userInfo.role === "CUSTOMER" && updatedStatus === "DELIVERED") {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Customer cannot change a product status delivered"
     );
   }
-  if (userInfo.role !== "VENDOR" && payload.status === "DELIVERED") {
+  if (userInfo.role !== "VENDOR" && updatedStatus === "DELIVERED") {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Only vendor can change the status to delivered"
@@ -136,14 +136,15 @@ const changeOrderStatus = async (
   if (!isOrderExist) {
     throw new AppError(httpStatus.BAD_REQUEST, "This order is not found");
   }
-  if (isOrderExist.paymentStatus !== "PAID" && payload.status === "DELIVERED") {
+  if (isOrderExist.paymentStatus !== "PAID" && updatedStatus === "DELIVERED") {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Order status only set delivered after payment successfully paid"
     );
   }
   let result;
-  if (payload.status === "CANCELLED") {
+
+  if (updatedStatus === "CANCELLED") {
     result = await prisma.$transaction(async (tsx) => {
       const orderItems = await tsx.orderItem.findMany({ where: { orderId } });
       Promise.all(
@@ -163,9 +164,12 @@ const changeOrderStatus = async (
   } else {
     result = await prisma.order.update({
       where: { id: orderId },
-      data: { status: "DELIVERED" },
+      data: {
+        status: OrderStatus.DELIVERED,
+      },
     });
   }
+
   return result;
 };
 
@@ -247,9 +251,7 @@ const getAllOrders = async (
         ? {
             User: { select: { Profile: true } },
             OrderItem: {
-              select: {
-                id: true,
-                quantity: true,
+              include: {
                 Product: {
                   select: {
                     title: true,
