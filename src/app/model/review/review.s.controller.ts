@@ -7,7 +7,7 @@ import { paginateProps } from "../../constant/model.constant";
 
 const getMyAllReviews = catchAsync(async (req, res, next) => {
   const paginateOptions = pick(req.query, paginateProps);
-  const options = pick(req.query, ["isVendorResponse"]);
+  const options = pick(req.query, ["isVendorResponse", "productId"]);
 
   const result = await ReviewService.getMyAllReviews(
     req?.extendedUserData,
@@ -18,6 +18,19 @@ const getMyAllReviews = catchAsync(async (req, res, next) => {
     statusCode: httpStatus.OK,
     success: true,
     message: "All reviews retrieved successfull",
+    data: result,
+  });
+});
+const getReviewedProductInfo = catchAsync(async (req, res, next) => {
+  const options = pick(req.query, ["isVendorResponse", "productId"]);
+
+  const result = await ReviewService.getReviewedProductInfo(
+    req?.extendedUserData
+  );
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "All reviewed products retrieved successfull",
     data: result,
   });
 });
@@ -78,6 +91,7 @@ const deleteReview = catchAsync(async (req, res, next) => {
 
 export const ReviewController = {
   getMyAllReviews,
+  getReviewedProductInfo,
   getSingleProductReview,
   createReview,
   updateReview,

@@ -11,6 +11,11 @@ const router = Router();
 
 // Customer & Vendor can get it's all product reviews
 router.get("/", auth("CUSTOMER", "VENDOR"), ReviewController.getMyAllReviews);
+router.get(
+  "/products",
+  auth("VENDOR"),
+  ReviewController.getReviewedProductInfo
+);
 
 // productId
 router.get("/:id", ReviewController.getSingleProductReview);

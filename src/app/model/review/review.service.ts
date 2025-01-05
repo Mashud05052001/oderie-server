@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, Product } from "@prisma/client";
 import httpStatus from "http-status";
 import { prisma } from "../../config";
 import AppError from "../../errors/AppError";
@@ -164,12 +164,17 @@ const getMyAllReviews = async (
       ? { userId: userInfo?.userId }
       : { vendorId: userInfo?.vendorId! },
   ];
-  if (userRole === "VENDOR" && options?.isVendorResponse === "true") {
-    andCondition.push({ NOT: { VendorResponse: null } });
-  } else if (userRole === "VENDOR" && options?.isVendorResponse === "false") {
-    andCondition.push({ VendorResponse: null });
+  if (userRole === "VENDOR" && options?.isVendorResponse) {
+    if (options?.isVendorResponse === "true") {
+      andCondition.push({ NOT: { VendorResponse: null } });
+    } else if (options?.isVendorResponse === "false") {
+      andCondition.push({ VendorResponse: null });
+    }
+    delete options?.isVendorResponse;
   }
+
   const query = queryBuilder({
+    filters: options,
     pagination: paginateOptions,
     additionalConditions: andCondition,
   });
@@ -178,11 +183,13 @@ const getMyAllReviews = async (
     where: query?.where,
     include: {
       Product: true,
-      VendorResponse: true,
+      // VendorResponse: true,
+      VendorResponse: { where: { isDeleted: false } },
       User: userInfo?.role === "VENDOR" ? { select: { Profile: true } } : false,
     },
     skip: query?.skip,
     take: query?.limit,
+    orderBy: query?.orderBy,
   });
   const total = await prisma.review.count({
     where: query?.where,
@@ -191,10 +198,48 @@ const getMyAllReviews = async (
   return returnMetaData(total, query, result);
 };
 
+const getReviewedProductInfo = async (userInfo: TExtendedUserData) => {
+  const vendorId = userInfo?.vendorId!;
+  const result = await prisma.review.findMany({
+    where: { vendorId },
+    distinct: ["productId"],
+    select: {
+      productId: true,
+      Product: {
+        select: {
+          title: true,
+          Category: { select: { name: true, icon: true } },
+          img: true,
+        },
+      },
+    },
+  });
+  const alreadyReviewdProducts: Partial<Product>[] = result.map((item) => ({
+    id: item.productId,
+    title: item?.Product?.title,
+    img: item?.Product?.img,
+    Category: item?.Product?.Category,
+  }));
+  const ids: string[] = [];
+  alreadyReviewdProducts.forEach((item) => ids.push(item.id!));
+  const otherProducts = await prisma.product.findMany({
+    where: { vendorId, id: { notIn: ids } },
+    select: {
+      id: true,
+      title: true,
+      img: true,
+      Category: { select: { icon: true, name: true } },
+    },
+  });
+  console.log(otherProducts.length);
+  return [...alreadyReviewdProducts, ...otherProducts];
+};
+
 export const ReviewService = {
   getSingleProductReview,
   createReview,
   updateReview,
   deleteReview,
   getMyAllReviews,
+  getReviewedProductInfo,
 };

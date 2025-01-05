@@ -12,20 +12,31 @@ const create = async (
     where: { id: payload.reviewId, isDeleted: false },
   });
   const isAlreadyResponsed = await prisma.vendorResponse.findFirst({
-    where: { reviewId: payload.reviewId, isDeleted: false },
+    where: { reviewId: payload.reviewId },
   });
+
   if (isAlreadyResponsed) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "You can't response a review twice"
-    );
+    if (isAlreadyResponsed?.isDeleted === false) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "You can't response a review twice"
+      );
+    } else {
+      const result = await prisma.vendorResponse.update({
+        where: { id: isAlreadyResponsed?.id },
+        data: { isDeleted: false, message: payload.message },
+      });
+      return result;
+    }
   }
+
   const responseData = {
     message: payload.message,
     reviewId: payload.reviewId,
     vendorId: userInfo.vendorId as string,
   };
   const result = await prisma.vendorResponse.create({ data: responseData });
+
   return result;
 };
 
